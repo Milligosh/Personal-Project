@@ -12,7 +12,7 @@ const {
   ADMIN_PHONENUMBER: phonenumber,
 } = process.env;
 
-const addedAdmin = `
+const addedAdmin:string = `
   INSERT INTO users(
     firstname,
     lastname,
@@ -24,10 +24,10 @@ const addedAdmin = `
   )VALUES($1,$2,$3,$4,$5,$6,$7)RETURNING id,firstname,username,email,phonenumber,role,created_at;
   `;
 
-const saltRounds = 12;
-const hashedPassword = bcrypt.hashSync(password as string, saltRounds);
+const saltRounds:number = 12;
+const hashedPassword:string = bcrypt.hashSync(password as string, saltRounds);
 
-const run = () => {
+const run = ():void => {
   console.log("ready to seed in super admin...");
   const response = pool
     .query(addedAdmin, [
@@ -43,7 +43,7 @@ const run = () => {
       console.log("seeding completed with no issues.🎉...");
       process.exit(0);
     })
-    .catch((e) => {
+    .catch((e:Error) => {
       console.log("Error", e.message);
       process.exit(1);
     });
