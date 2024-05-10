@@ -122,4 +122,111 @@ export class CreateUserService {
       },
     };
   }
+
+  
+  static async fetchAll():Promise<any>{
+  const data= (await pool.query(userQueries.fetchAllUsers)).rows
+  return{
+    status: "success",
+    message: "Users fetched successfully",
+    code: 200,
+    data
+  }
+  }
+
+//   static async editDetails( body:any):Promise<any>{
+// const {firstname,lastname,username,email,phonenumber,id}= body
+// const findById= (await pool.query(userQueries.fetchUserbyId,[id])).rows[0]
+//   if (!findById){
+//     return{
+//       status: "Error",
+//     message: `User with id ${id} does not exist`,
+//     code: 400,
+//     data:null
+//     }
+//   }
+  
+
+//   const data= (await pool.query(userQueries.updateUser,[firstname,lastname,username,email,phonenumber,id])).rows[0]
+//   return{
+//     status: "Success",
+//     message: `User with id ${id} updated successfully`,
+//     code: 200,
+//     data
+//   }
+//   }
+static async editDetails(body: any): Promise<any> {
+  const { firstname, lastname, username, email, phonenumber, id } = body;
+
+  const existingUser = (await pool.query(userQueries.fetchUserbyId, [id])).rows[0];
+  if (!existingUser) {
+      return {
+          status: "Error",
+          message: `User with id ${id} does not exist`,
+          code: 400,
+          data: null
+      };
+  }
+
+  const updateParams = [];
+  const updateFields:any = [];
+
+  const addUpdateField = (paramValue:any, paramName:any) => {
+      if (paramValue !== undefined) {
+          updateParams.push(paramValue);
+          updateFields.push(`${paramName}=$${updateParams.length}`);
+      }
+  };
+
+  addUpdateField(firstname, 'firstname');
+  addUpdateField(lastname, 'lastname');
+  addUpdateField(username, 'username');
+  addUpdateField(email, 'email');
+  addUpdateField(phonenumber, 'phonenumber');
+
+  if (updateParams.length === 0) {
+      return {
+          status: "Error",
+          message: `No fields provided for update`,
+          code: 400,
+          data: null
+      };
+  }
+
+  const updateQuery = `UPDATE users SET ${updateFields.join(',')} WHERE id=$${updateParams.length + 1}`;
+  updateParams.push(id);
+
+  // Perform the update with the dynamic update query
+  const data = (await pool.query(updateQuery, updateParams)).rows[0];
+
+  return {
+      status: "Success",
+      message: `User with id ${id} updated successfully`,
+      code: 200,
+      data
+  };
+}
+
+
+  static async deleteUser(id:string):Promise<any>{
+   const findById= (await pool.query(userQueries.fetchUserbyId,[id])).rows[0]
+   console.log(findById)
+   if (!findById){
+    return{
+      status: "Error",
+    message: `Cannot delete user with id ${id}`,
+    code: 400,
+    data:null
+    }
+   }
+   else{
+    await pool.query(userQueries.deleteUser, [id]);
+    return{
+      status: "Success",
+      message: `User with id ${id} deleted successfully`,
+      code: 200,
+      data:findById
+    }
+   }
+  }
 }

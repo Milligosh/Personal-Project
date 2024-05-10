@@ -3,7 +3,9 @@ const app = express();
 import pool from "./config/database/db.js";
 import dotenv from 'dotenv';
 import api from "./config/versioning/v1.js";
+import {appErrorHandler,genericErrorHandler,notFound} from "./middlewares/error.middleware.js"
 dotenv.config();
+
 
 const PORT = process.env.PORT || 3000;
 
@@ -24,6 +26,10 @@ app.listen(PORT, () => {
 });
 
 app.use("/api/v1", api);
+app.use(appErrorHandler);
+app.use(genericErrorHandler);
+app.use(notFound)
+
 
 app.use((error: any, req: Request, res: Response, next: NextFunction) => {
   res.status(error?.code ?? 500).json(error);
