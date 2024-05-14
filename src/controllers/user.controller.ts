@@ -9,7 +9,6 @@ export class UserController {
   ): Promise<any> {
     try {
       const result = await CreateUserService.newUser(request.body);
-      console.log(result);
       return response.status(result.code).json(result);
     } catch (error) {
       next(error);
@@ -64,12 +63,12 @@ export class UserController {
     response: Response,
     next: NextFunction
   ): Promise<any> {
-    try{
+    try {
       //  const {id}=request.params.id
-        const result= await CreateUserService.deleteUser(request.params.id)
-        return response.status(result.code).json(result);
-    }catch(error){
-      next(error)
+      const result = await CreateUserService.deleteUser(request.params.id);
+      return response.status(result.code).json(result);
+    } catch (error) {
+      next(error);
     }
   }
 }

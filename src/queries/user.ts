@@ -10,7 +10,8 @@ INSERT INTO users(
     role 
 )VALUES($1,$2,$3,$4,$5,$6,$7)RETURNING id,firstname,username,email,phonenumber,role,created_at;
 `,
-  fetchUserByEmail: `SELECT id,firstname,lastname,username,email,phonenumber,created_at,role FROM users WHERE email=$1`,
+  fetchUserByEmail: `SELECT id, firstname, lastname, username, email, password, phonenumber,role, created_at FROM users WHERE email=$1`,
+
   fetchUserByUsername: `SELECT firstname,lastname,username,email,password,phonenumber,role FROM users WHERE username=$1`,
 
   fetchAllUsers: `SELECT id,firstname,lastname,username,email,phonenumber,role,created_at FROM users`,

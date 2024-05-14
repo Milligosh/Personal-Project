@@ -4,13 +4,26 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import config from "../config/env/development.js";
 
+
+
+export default interface User {
+  id: string;
+  firstname: string;
+  lastname: string;
+  username: string;
+  email: string;
+  password: string;
+  phonenumber: string;
+  role: string;
+  created_at: string;
+}
+
 export class CreateUserService {
   static async newUser(body: any): Promise<any> {
     const { firstName, lastName, userName, email, password, phoneNumber } =
       body;
 
-    const userExist = (await pool.query(userQueries.fetchUserByEmail, [email]))
-      .rows[0];
+    const userExist: User = (await pool.query(userQueries.fetchUserByEmail, [email])).rows[0];
 
     if (userExist) {
       throw {
@@ -20,9 +33,8 @@ export class CreateUserService {
         status: "error",
       };
     }
-    const userNameExist = (
-      await pool.query(userQueries.fetchUserByUsername, [userName])
-    ).rows[0];
+
+    const userNameExist: User = (await pool.query(userQueries.fetchUserByUsername, [userName])).rows[0];
 
     if (userNameExist) {
       throw {
@@ -32,8 +44,9 @@ export class CreateUserService {
         status: "error",
       };
     }
+
     const saltRounds = 12;
-    const hashPassword = bcrypt.hashSync(password, saltRounds);
+    const hashPassword: string = bcrypt.hashSync(password, saltRounds);
     const response = await pool.query(userQueries.createNewUser, [
       firstName,
       lastName,
@@ -44,8 +57,6 @@ export class CreateUserService {
       "user",
     ]);
 
-    //console.log(JSON.stringify(response.rows[0]));
-
     return {
       code: 201,
       status: "success",
@@ -54,13 +65,11 @@ export class CreateUserService {
     };
   }
 
-  //LOGIN USER
   static async logInUser(body: any): Promise<any> {
     const { email, password } = body;
 
-    const checkIfExist = (
-      await pool.query(userQueries.fetchUserByEmail, [email])
-    ).rows[0];
+    const checkIfExist: User = (await pool.query(userQueries.fetchUserByEmail, [email])).rows[0];
+
     if (!checkIfExist) {
       throw {
         code: 409,
@@ -69,6 +78,7 @@ export class CreateUserService {
         data: null,
       };
     }
+
     const {
       password: databasePassword,
       firstname,
@@ -79,10 +89,7 @@ export class CreateUserService {
       created_at,
     } = checkIfExist;
 
-    const comparePassword:boolean= await bcrypt.compareSync(
-      password,
-      databasePassword
-    );
+    const comparePassword: boolean = bcrypt.compareSync(password, databasePassword);
 
     if (!comparePassword) {
       throw {
@@ -92,10 +99,12 @@ export class CreateUserService {
         data: null,
       };
     }
-    const options:object= {
-      "expiresIn": "1d",
+
+    const options: jwt.SignOptions = {
+      expiresIn: "1d",
     };
-    const token = jwt.sign(
+
+    const token: string = jwt.sign(
       {
         id,
         firstname,
@@ -106,6 +115,7 @@ export class CreateUserService {
       config.JWT_SECRET as string,
       options
     );
+
     return {
       status: "success",
       message: "User login successfully",
@@ -123,94 +133,73 @@ export class CreateUserService {
     };
   }
 
-  
-  static async fetchAll():Promise<any>{
-  const data= (await pool.query(userQueries.fetchAllUsers)).rows
-  return{
-    status: "success",
-    message: "Users fetched successfully",
-    code: 200,
-    data
+  static async fetchAll(): Promise<any> {
+    const data: User[] = (await pool.query(userQueries.fetchAllUsers)).rows;
+    return {
+      status: "success",
+      message: "Users fetched successfully",
+      code: 200,
+      data,
+    };
   }
-  }
 
-//   static async editDetails( body:any):Promise<any>{
-// const {firstname,lastname,username,email,phonenumber,id}= body
-// const findById= (await pool.query(userQueries.fetchUserbyId,[id])).rows[0]
-//   if (!findById){
-//     return{
-//       status: "Error",
-//     message: `User with id ${id} does not exist`,
-//     code: 400,
-//     data:null
-//     }
-//   }
-  
+  static async editDetails(body: any): Promise<any> {
+    const { firstname, lastname, username, email, phonenumber, id } = body;
 
-//   const data= (await pool.query(userQueries.updateUser,[firstname,lastname,username,email,phonenumber,id])).rows[0]
-//   return{
-//     status: "Success",
-//     message: `User with id ${id} updated successfully`,
-//     code: 200,
-//     data
-//   }
-//   }
-static async editDetails(body: any): Promise<any> {
-  const { firstname, lastname, username, email, phonenumber, id } = body;
+    const existingUser: User = (await pool.query(userQueries.fetchUserbyId, [id])).rows[0];
 
-  const existingUser = (await pool.query(userQueries.fetchUserbyId, [id])).rows[0];
-  if (!existingUser) {
+    if (!existingUser) {
       return {
-          status: "Error",
-          message: `User with id ${id} does not exist`,
-          code: 400,
-          data: null
+        status: "Error",
+        message: `User with id ${id} does not exist`,
+        code: 400,
+        data: null,
       };
-  }
+    }
 
-  const updateParams = [];
-  const updateFields:any = [];
+    const updateParams: any[] = [];
+    const updateFields: string[] = [];
 
-  const addUpdateField = (paramValue:any, paramName:any) => {
+    const addUpdateField = (paramValue: any, paramName: string) => {
       if (paramValue !== undefined) {
-          updateParams.push(paramValue);
-          updateFields.push(`${paramName}=$${updateParams.length}`);
+        updateParams.push(paramValue);
+        updateFields.push(`${paramName}=$${updateParams.length}`);
       }
-  };
+    };
 
-  addUpdateField(firstname, 'firstname');
-  addUpdateField(lastname, 'lastname');
-  addUpdateField(username, 'username');
-  addUpdateField(email, 'email');
-  addUpdateField(phonenumber, 'phonenumber');
+    addUpdateField(firstname, "firstname");
+    addUpdateField(lastname, "lastname");
+    addUpdateField(username, "username");
+    addUpdateField(email, "email");
+    addUpdateField(phonenumber, "phonenumber");
 
-  if (updateParams.length === 0) {
+    if (updateParams.length === 0) {
       return {
-          status: "Error",
-          message: `No fields provided for update`,
-          code: 400,
-          data: null
+        status: "Error",
+        message: `No fields provided for update`,
+        code: 400,
+        data: null,
       };
-  }
+    }
 
-  const updateQuery = `UPDATE users SET ${updateFields.join(',')} WHERE id=$${updateParams.length + 1}`;
-  updateParams.push(id);
+    const updateQuery: string = `UPDATE users SET ${updateFields.join(",")} WHERE id=$${updateParams.length + 1}`;
+    updateParams.push(id);
 
-  // Perform the update with the dynamic update query
-  const data = (await pool.query(updateQuery, updateParams)).rows[0];
+    const data: User = (await pool.query(updateQuery, updateParams)).rows[0];
 
-  return {
+    return {
       status: "Success",
       message: `User with id ${id} updated successfully`,
       code: 200,
-      data
-  };
-}
+      data,
+    };
+  }
+
+
 
 
   static async deleteUser(id:string):Promise<any>{
-   const findById= (await pool.query(userQueries.fetchUserbyId,[id])).rows[0]
-   console.log(findById)
+   const findById:User= (await pool.query(userQueries.fetchUserbyId,[id])).rows[0]
    if (!findById){
     return{
       status: "Error",
